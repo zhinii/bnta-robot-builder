@@ -4,6 +4,8 @@
 
 A bilingual English/简体中文 robot design studio developed by Christopher Hansen, extending the [Robot Lab](https://github.com/zhinii/bnta-robotics) guided lessons. Students choose link lengths and rotation axes, test their robot in a fictional school greenhouse, and explain the trade-offs behind their design.
 
+**[Open Robot Builder](https://zhinii.github.io/bnta-robot-builder/)** · [Open the guided lesson](https://zhinii.github.io/bnta-robot-builder/beginner-3axis/teacher.html)
+
 The design budget has **six slots**:
 
 - A fixed base permits up to **six arm joints**.
@@ -58,7 +60,7 @@ Visual WebGL and responsive-layout review are still pending. The model does not 
 | `six-axis-agent/kinematics.mjs` | Pure kinematics used by the guided lesson |
 | `scripts/test.mjs` | Test runner with a temporary local asset-check server |
 
-This repository is a clean, independent copy. It excludes the original simulator's server configuration, credentials, logs, sessions and repository history. The original simulator checkout is preserved. Static files are compatible with GitHub Pages; hosting must be enabled separately.
+This repository is a clean, independent copy. It excludes the original simulator's server configuration, credentials, logs, sessions and repository history. The original simulator checkout is preserved. GitHub Pages publishes the repository root from `main`; future pushes update the public site automatically.
 
 ## License
 
