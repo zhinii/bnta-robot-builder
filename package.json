@@ -1,8 +1,8 @@
 {
   "name": "bnta-robot-builder",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Bilingual robot design studio with a six-slot budget, rover trade-offs and evidence-based reflection.",
+  "description": "Bilingual robot design studio with a parts budget, three task environments and rover-versus-arm trade-offs.",
   "type": "module",
   "license": "MIT",
   "author": "Christopher Hansen",

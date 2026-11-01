@@ -1,40 +1,59 @@
-# Robot Builder
+# Robot Builder: budgets and task environments
 
-A bilingual design activity extending Robot Lab's guided lessons. Students explore a fictional school greenhouse, choose a fixed or mobile base, and construct a serial arm. The total budget is **six slots: one for each arm joint, plus one for an optional rover**. This classroom accounting rule does not describe the rover's physical degrees of freedom. A fixed base supports at most six arm joints; a rover supports at most five.
+Run `npm start` from the repository root and open http://127.0.0.1:4242/robot-builder/. All application assets and the guided lesson are local; no API or external CDN is required.
 
-Run `npm start` from this repository's root, then open http://127.0.0.1:4242/robot-builder/. The tool uses the locally vendored Three.js modules in `beginner-3axis/vendor/three/`; it requires no API, account, network CDN or dependency installation to run. Preserve those modules and their license when copying the tool. The original simulator checkout is not modified.
+## Parts and constraints
 
-## Learning through design
+Every scenario has a **$1,200 classroom budget**. Each rotary joint costs $100. Links cost $0.50 per millimetre, with five new-design choices: 100, 200, 300, 400 and 500 mm. A fixed base costs $100; a rover costs $400. The camera is included.
 
-The fictional task is to bring an inspection camera close to three greenhouse plants at different heights and on opposite sides of an aisle. The suggested observation tolerances are 120 mm position and 20 degrees direction. Students can build, test and explain in any order. Nothing is locked behind a reflection or a score. The greenhouse is a starting scenario, not a user-confirmed curriculum requirement.
+Six slots remain the independent upper limit. Each arm joint consumes one, and the rover consumes one. Thus a rover can have at most five arm joints, subject to the money budget. It does not have to use all of them.
 
-| Existing lesson | Builder opportunity | Reasoning to discuss |
-| --- | --- | --- |
-| Robot types | Fixed arm or rover-mounted arm | Does moving the base justify losing one arm joint? |
-| Links, joints and axes | Select each link's length, local rotation axis and mounting direction | What independent movement does this joint add? |
-| One joint, what else moves? | Move one joint and watch the downstream chain | Which parts move even if their joint angles stay unchanged? |
-| XYZ versus degrees | Compare joint sliders with the camera's measured world coordinates | How does a rotation change position? |
-| Position versus orientation | Compare distance and camera-direction error separately | Does reaching the point also point the camera correctly? |
-| Reach and joint limits | Three discrete lengths and adjustable bounded rotation ranges | Is the restriction length, axis arrangement or permitted rotation? |
-| Reachable endpoint versus blocked path | Solid beds, current-pose overlap feedback and bounded rover movement | What extra evidence would establish a clear route? |
+| Rover configuration | Joint cost | Link cost | Base | Total |
+| --- | --- | --- | --- | --- |
+| 3 joints; 1,000 mm total links | $300 | $500 | $400 | $1,200 |
+| 4 joints; 800 mm total links | $400 | $400 | $400 | $1,200 |
+| 5 joints; 600 mm total links | $500 | $300 | $400 | $1,200 |
 
-The notebook asks students to predict, justify a choice, cite observations and propose one revision. Up to six design-and-observation snapshots support comparisons. They are not automatic grades or proof of learning. The gripper/holding-feedback lesson is not exercised by this camera-only first scenario.
+The rover counts as one **design slot**, not one physical rotary joint. Link length is the sum of rigid arm segments, not a guaranteed Cartesian reach. The camera adds a fixed 65 mm offset. These are fictional teaching prices. Replacing or removing a component returns its full cost; an edit that would exceed the budget is rejected without changing the design.
 
-## Behavior and limits
+## Tasks and learning
 
-- One to six rotary arm joints, reduced to five with a rover. Each joint drives one rigid link. Lengths are 200, 350 or 500 mm; rotation is around local X, Y or Z; link directions are the six signed local axes. Rotation limits stay within -180 to +180 degrees. The camera is a fixed end effector and does not consume a positioning slot.
-- Forward kinematics composes every joint frame and the rover translation/yaw. Joints are edited directly; there is no automatic inverse-kinematics solution or generated task program.
-- Rover buttons move 100 mm or turn 15 degrees. Translation is sampled in 20 mm steps against a conservative circular footprint and rectangular bed bounds. Turning uses the same footprint. Fixed bases stay at the aisle centre.
-- Current arm poses are checked against the floor and padded bed boxes. These overlap indicators do not validate full swept routes or prevent exploratory arm movement. No self-collision, dynamics, motor loads, stability, image capture, crop health inference or physical robot control is implemented.
-- EN/中文 is explicit and persistent. Project JSON contains robot geometry, pose, four reflection fields and comparison snapshots. A browser-local draft is saved; Save project is the portable copy. Data is not uploaded.
-- Geometry edits and poses have Undo. Notes and saved comparisons are retained separately; Undo does not restore deleted comparison entries.
+Students choose among three procedurally built scenes. The selected task supplies its room dimensions, fixtures, target positions/directions, fixed mount and rover starting position. Those same definitions drive the renderer and geometric checks.
 
-## Validation
+- **Disaster-site inspection:** openings are spread along an 8.4 m corridor. One lies beyond the theoretical reach of any affordable fixed chain from its marked mount. A rover can traverse the clear corridor and inspect all three.
+- **Workshop quality inspection:** components sit on one compact workbench, with different approach directions. A $600 fixed design is a verified example; base travel is not necessary. This example is in tests, not automatically given to students.
+- **Museum collection inspection:** three display heights and approach positions admit both fixed and mobile solutions. Tests include a $1,100 fixed design and a $1,150 rover design. These establish feasibility, not optimality or physical validity.
 
-Run `node --test robot-builder/tests/model.test.mjs` from the repository root. Tests cover kinematics, local-axis inheritance, rover transformations, the exact six-slot boundary, malformed project rejection, joint ranges, obstacle travel and pose evidence.
+The student choice cards describe the task conditions without labeling a winning base. Both bases remain selectable. The notebook asks students to predict, justify a choice, cite evidence and revise one idea. Comparison snapshots include parts cost, total link length, slot use and camera measurements. There is no timer, automatic grade or mandatory writing sequence.
 
-After `npm ci --ignore-scripts`, `npm test` runs the full suite. The DOM check uses jsdom to exercise controls, the real Three.js scene graph with a stub renderer, rover travel, Undo, reflections, immutable comparison snapshots, EN/中文 and project import/export. It is not a browser rendering test. A temporary local server checks the builder and linked lesson dependency graphs over HTTP and verifies that server/config files are excluded.
+| Guided-lesson concept | Builder evidence |
+| --- | --- |
+| Robot types | Decide whether whole-body travel is worth its cost. |
+| Links, joints and axes | Choose lengths, local axes and signed mounting directions. |
+| One joint, what else moves? | Watch the downstream chain follow an upstream rotation. |
+| XYZ versus degrees | Compare world camera coordinates with joint-angle changes. |
+| Position versus orientation | Inspect distance and direction error independently. |
+| Reach and joint limits | Distinguish length, axis arrangement, angle limits and affordability. |
+| A reachable endpoint versus a blocked route | Examine clearances and the limits of pose-only evidence. |
 
-Initial prototype verification: 10 model tests, the DOM/scene-graph journey, and HTTP checks of 27 builder/lesson assets passed. Visual WebGL and responsive-layout QA remain unverified because local browser control was disabled during the initial review. No files in the original simulator checkout were changed when preparing this independent repository.
+The camera-only tasks do not implement the earlier lesson's gripping or part-carrying activity.
 
-Robot Lab · Christopher Hansen. The surrounding repository's MIT license and the vendored Three.js license apply.
+## Saving and compatibility
+
+Each task's draft, notes and up to six comparisons persist separately in browser storage. Changing tasks does not erase another task's work. Export saves the selected task as a version-2 JSON project; import restores its scene. Invalid imports preserve the workspace.
+
+Version-1 greenhouse files migrate to the museum scene. Geometry, notes and comparison text are retained, including old 350 mm links; base placement is reset. A persistent notice explains the changed context, and old comparison notes are explicitly labeled as greenhouse records instead of being presented as new measurements. The old browser storage key is not overwritten. Above-budget imported designs remain editable, but Test movement and aligned-target feedback stay disabled until affordable. Their cost always comes from the current catalog, not values supplied in the file.
+
+## Model boundaries
+
+The model composes every joint's local rotation and translation with the fixed mounting point or rover position/yaw. There is no automatic solver or task program. Rover steps are 100 mm or 15 degrees; translation is sampled against a conservative 260 mm footprint, solid fixtures and room boundaries.
+
+Inspection feedback checks a current camera pose within 120 mm and 20 degrees of a target, with no detected floor/fixture overlap and a valid budget. Arm overlap uses simplified segment/box bounds. Exploratory arm controls can pass through fixtures; full swept paths, self-collisions, motor loads, dynamics, stability and actual camera images are not simulated. These observations are evidence for discussion, not physical-robot approval or route-completion scores.
+
+## Verification
+
+After `npm ci --ignore-scripts`, run `npm test`. The suite covers money and slot constraints, legacy recovery, scene-specific kinematics and fixtures, feasible task examples, per-task drafts, bilingual UI, save/import/export, scene-graph replacement and overview camera projection. Asset checks start and stop a temporary local server.
+
+Visual WebGL and responsive CSS review remain unverified because local browser control is disabled in the Work settings. The scene-graph harness uses a stub renderer and is not a pixel rendering test.
+
+Robot Lab · Christopher Hansen. Repository and vendored Three.js MIT licenses apply.

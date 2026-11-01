@@ -13,19 +13,21 @@
     <div class="file-actions"><button id="undo" data-copy="undo" disabled></button><button id="import" data-copy="open"></button><button id="export" class="primary" data-copy="save"></button><select id="language" aria-label="Language / 语言"><option value="en">EN</option><option value="zh">中文</option></select></div>
   </header>
   <main>
-    <section class="workspace" aria-label="Robot and greenhouse / 机器人与温室">
-      <div class="scene-heading"><div><span class="eyebrow" data-copy="challenge"></span><h1 data-copy="greenhouse"></h1></div><button id="brief-toggle" aria-expanded="false" aria-controls="brief" data-copy="brief"></button></div>
-      <div id="brief" hidden><h2 data-copy="briefTitle"></h2><p data-copy="briefText"></p><p class="brief-rule" data-copy="briefRule"></p><a href="../beginner-3axis/teacher.html" target="_blank" rel="noopener" data-copy="lesson"></a></div>
+    <section class="workspace" aria-label="Robot and task environment / 机器人与任务环境">
+      <div class="scene-heading"><div><span class="eyebrow" data-copy="challenge"></span><h1 id="scenario-title"></h1><span id="scenario-tag"></span></div><div class="scenario-actions"><button id="scenario-switch" data-copy="chooseScenario"></button><button id="brief-toggle" aria-expanded="false" aria-controls="brief" data-copy="brief"></button></div></div>
+      <div id="brief" hidden><h2 id="brief-title"></h2><p id="brief-text"></p><p id="scenario-question"></p><p class="brief-rule" data-copy="briefRule"></p><a href="../beginner-3axis/teacher.html" target="_blank" rel="noopener" data-copy="lesson"></a></div>
       <div id="scene"><div id="no3d" hidden data-copy="no3d"></div></div>
-      <div class="scene-tools"><button id="view-home" data-copy="homeView"></button><button id="view-top" data-copy="topView"></button><button id="labels" aria-pressed="true" data-copy="labels"></button></div>
+      <div class="scene-tools"><button id="view-all" data-copy="sceneView"></button><button id="view-home" data-copy="homeView"></button><button id="view-top" data-copy="topView"></button><button id="labels" aria-pressed="true" data-copy="labels"></button></div>
       <div class="scene-hint" data-copy="sceneHint"></div>
       <div id="geometry-warning" hidden role="status"></div>
       <div class="readout"><div><span data-copy="cameraPosition"></span><strong id="tip-position"></strong></div><div><span data-copy="selectedAxis"></span><strong id="axis-readout"></strong></div><div class="scale-note"><span data-copy="units"></span><strong data-copy="grid"></strong></div></div>
     </section>
     <aside>
-      <div class="budget"><div class="budget-title"><span data-copy="budget"></span><strong id="slot-count"></strong></div><div id="slots" aria-label="Six design slots / 六个设计名额"></div><p data-copy="budgetRule"></p></div>
+      <div class="budget"><div class="budget-title"><span data-copy="budget"></span><strong id="money-total"></strong></div><progress id="money-meter" max="1200" value="0" aria-label="Parts budget spent / 已用零件预算"></progress><div class="budget-summary"><span id="money-remaining"></span><span id="total-length"></span></div><div class="slot-heading"><span data-copy="jointSlots"></span><strong id="slot-count"></strong></div><div id="slots" aria-label="Six design slots / 六个设计名额"></div><p data-copy="budgetRule"></p></div>
       <div class="panel-scroll">
+        <div id="legacy-notice" class="thinking-prompt" hidden data-copy="legacyNotice"></div>
         <section id="build-panel">
+          <details class="price-list"><summary data-copy="priceList"></summary><p data-copy="classroomPrices"></p><dl id="receipt"></dl><p class="help" data-copy="roverTrade"></p></details>
           <label class="field-label" for="robot-name" data-copy="name"></label><input id="robot-name" maxlength="70">
           <div class="section-heading"><h2 data-copy="base"></h2><span data-copy="baseChoice"></span></div>
           <div class="base-options"><button id="fixed-base"><span class="base-symbol">⊥</span><strong data-copy="fixed"></strong><small data-copy="freeBase"></small></button><button id="rover-base"><span class="base-symbol">▰</span><strong data-copy="rover"></strong><small data-copy="oneSlot"></small></button></div>
@@ -34,7 +36,7 @@
           <div id="joint-list" class="joint-list" aria-label="Arm joints / 机械臂关节"></div>
           <section class="joint-editor"><div class="section-heading"><h2 id="joint-title"></h2><button id="remove-joint" class="text-button danger" data-copy="remove"></button></div>
             <label class="field-label" data-copy="axis"></label><div id="axis-options" class="segmented"><button data-axis="x">X</button><button data-axis="y">Y</button><button data-axis="z">Z</button></div><p class="help" data-copy="axisHelp"></p>
-            <label class="field-label" for="link-length" data-copy="length"></label><select id="link-length"><option value="200" data-copy="short"></option><option value="350" data-copy="medium"></option><option value="500" data-copy="long"></option></select>
+            <label class="field-label" for="link-length" data-copy="length"></label><select id="link-length"></select>
             <label class="field-label" for="joint-angle" data-copy="pose"></label><div class="slider-row"><input id="joint-angle" type="range" step="1"><input id="joint-angle-number" type="number" step="1" aria-label="Selected joint angle in degrees / 所选关节角度"></div>
             <details id="joint-details"><summary data-copy="jointDetails"></summary><label class="field-label" for="link-direction" data-copy="linkDirection"></label><select id="link-direction"><option value="+x">+X</option><option value="-x">−X</option><option value="+y">+Y</option><option value="-y">−Y</option><option value="+z">+Z</option><option value="-z">−Z</option></select><div class="limit-fields"><label><span data-copy="minAngle"></span><input id="limit-min" type="number" min="-180" max="179" step="1"></label><label><span data-copy="maxAngle"></span><input id="limit-max" type="number" min="-179" max="180" step="1"></label></div><p class="help" data-copy="limitHelp"></p></details>
           </section>
@@ -61,6 +63,7 @@
   </main>
   <div id="message" role="status" aria-live="polite" hidden></div>
   <input id="file" type="file" accept="application/json,.json" hidden>
+  <dialog id="scenario-picker" aria-labelledby="picker-title"><div class="picker-heading"><div><span class="eyebrow" data-copy="chooseProblem"></span><h2 id="picker-title" data-copy="pickerTitle"></h2></div><button id="picker-close" data-copy="close"></button></div><p data-copy="pickerHelp"></p><div id="scenario-cards"></div><p class="picker-footer" data-copy="pickerFooter"></p></dialog>
   <script type="module" src="./app.mjs"></script>
 </body>
 </html>

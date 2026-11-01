@@ -1,17 +1,18 @@
 import * as THREE from 'three';
 import {OrbitControls} from '../beginner-3axis/vendor/three/examples/jsm/controls/OrbitControls.js';
-import {forward,observe,BEDS,TARGETS,ROOM,transform} from './model.mjs';
+import {forward,observe,transform,getScenario} from './model.mjs';
+import {buildEnvironment} from './environment.mjs';
 const vec=p=>new THREE.Vector3(...p);
 const colours={x:0xb2604c,y:0x448363,z:0x547eb8};
 export function createScene(host,onSelect) {
   const scene=new THREE.Scene();scene.background=new THREE.Color('#e9efe9');
-  const camera=new THREE.PerspectiveCamera(36,1,5,18000);camera.up.set(0,0,1);
+  const camera=new THREE.PerspectiveCamera(36,1,5,40000);camera.up.set(0,0,1);
   let renderer;
   try {renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});}
-  catch {return {supported:false,update(){},home(){},top(){},setLabels(){},dispose(){}};}
+  catch {return {supported:false,update(){},home(){},top(){},overview(){},setLabels(){},dispose(){}};}
   renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.75));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-  host.prepend(renderer.domElement);renderer.domElement.setAttribute('aria-label','Interactive robot and greenhouse / 可交互机器人与温室');renderer.domElement.setAttribute('role','img');
-  const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.12;controls.minDistance=350;controls.maxDistance=10000;controls.maxPolarAngle=Math.PI*.49;
+  host.prepend(renderer.domElement);renderer.domElement.setAttribute('aria-label','Interactive robot and task environment / 可交互机器人与任务环境');renderer.domElement.setAttribute('role','img');
+  const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.12;controls.minDistance=350;controls.maxDistance=25000;controls.maxPolarAngle=Math.PI*.49;
   scene.add(new THREE.HemisphereLight(0xffffff,0x6f8d73,2.4));
   const sun=new THREE.DirectionalLight(0xfff7df,3.2);sun.position.set(-1800,-1500,4300);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-2300,right:2300,top:2300,bottom:-2300,near:10,far:8000});sun.shadow.bias=-.0004;scene.add(sun);
   const material=(color,extra={})=>new THREE.MeshStandardMaterial({color,roughness:.65,metalness:.08,...extra});
@@ -21,48 +22,15 @@ export function createScene(host,onSelect) {
   function rod(a,b,r,color,parent=props) {const m=mesh(new THREE.CylinderGeometry(r,r,1,16),color,parent);placeRod(m,a,b);return m;}
   function placeRod(m,a,b) {const va=vec(a),vb=vec(b);m.position.copy(va).add(vb).multiplyScalar(.5);m.scale.y=va.distanceTo(vb);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),vb.sub(va).normalize());}
   function setFrame(obj,frame) {const m=new THREE.Matrix4().set(frame[0],frame[1],frame[2],0,frame[3],frame[4],frame[5],0,frame[6],frame[7],frame[8],0,0,0,0,1);obj.quaternion.setFromRotationMatrix(m);}
-  box([0,0,-27],[ROOM.width,ROOM.depth,50],0xd9e1d5);
-  const grid=new THREE.GridHelper(4000,16,0xa1b6a5,0xc3d0c0);grid.rotation.x=Math.PI/2;grid.position.z=.6;props.add(grid);
-  // A distinct clear aisle keeps the mobile-base trade-off visible.
-  box([0,0,1],[980,ROOM.depth,2],0xe7e5d9);
-  for(const x of [-460,460])for(let y=-1300;y<=1300;y+=300)box([x,y,3],[7,120,2],0xb9bba1);
-  for(const b of BEDS) {
-    const size=b.max.map((v,i)=>v-b.min[i]),mid=b.min.map((v,i)=>(v+b.max[i])/2);
-    box(mid,size,0xb1bdad);box([mid[0],mid[1],b.max[2]-45],[size[0]+12,size[1]+12,100],0x7d9580);
-    box([mid[0],mid[1],b.max[2]+7],[size[0]-55,size[1]-55,18],0x665c42);
-    for(const y of [-950,-470,0,470,950])plant([mid[0]+(y%2?75:-45),y,640],240+Math.abs(y%130),false);
-  }
-  function plant(position,height,large) {
-    const [x,y,z]=position;
-    const pot=mesh(new THREE.CylinderGeometry(large?68:48,large?49:36,75,12),0xb78c65);pot.rotation.x=Math.PI/2;pot.position.set(x,y,z+30);
-    rod([x,y,z+50],[x,y,z+height],large?8:5,0x638251);
-    for(let i=0;i<6;i++) {
-      const angle=i*2.4,r=large?74:53,leaf=mesh(new THREE.SphereGeometry(1,12,8),i%2?0x6f9660:0x4d8055);
-      leaf.position.set(x+Math.cos(angle)*r*.65,y+Math.sin(angle)*r*.65,z+90+i*(height-95)/6);leaf.scale.set(r,large?36:26,large?14:10);leaf.rotation.z=angle;leaf.rotation.y=i%2?.3:-.3;
-    }
-  }
-  for(const t of TARGETS)plant([t.position[0]+t.direction[0]*175,t.position[1],640],t.position[2]-600,true);
-  // Open greenhouse frame; the near side is intentionally omitted for visibility.
-  const greenhouse=new THREE.Group();props.add(greenhouse);
-  for(const x of [-1730,1730]) {
-    for(const y of [-1430,1430])rod([x,y,0],[x,y,1950],12,0xb8c8bb,greenhouse);
-    rod([x,-1430,1950],[x,1430,1950],10,0xb8c8bb,greenhouse);
-  }
-  for(const y of [-1430,1430]) {rod([-1730,y,1950],[0,y,2450],9,0xbdcdc0,greenhouse);rod([0,y,2450],[1730,y,1950],9,0xbdcdc0,greenhouse);}
-  rod([0,-1430,2450],[0,1430,2450],8,0xbdcdc0,greenhouse);
-  greenhouse.traverse(m=>{if(m.isMesh){m.castShadow=false;m.material.transparent=true;m.material.opacity=.38;}});
-  // World frame stays fixed, while selected joint axes follow the arm.
-  for(const [i,color]of [[0,colours.x],[1,colours.y],[2,colours.z]]) {const d=[0,0,0];d[i]=1;props.add(new THREE.ArrowHelper(vec(d),vec([-310,-1240,20]),180,color,30,16));}
-  const targetMeshes=TARGETS.map(t=>{
-    const ring=mesh(new THREE.TorusGeometry(90,4,8,48),0xb49a54);ring.position.copy(vec(t.position));ring.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),vec(t.direction));ring.castShadow=false;
-    const dot=mesh(new THREE.SphereGeometry(10,12,8),0xc3a356);dot.position.copy(vec(t.position));dot.castShadow=false;
-    const arrow=new THREE.ArrowHelper(vec(t.direction),vec(t.position).addScaledVector(vec(t.direction),-100),180,0xb49a54,30,14);props.add(arrow);
-    return {ring,dot,arrow};
-  });
   const labelHost=document.createElement('div');labelHost.className='scene-labels';host.append(labelHost);
-  let jointMeshes=[],jointLabels=[],baseGroup,tool,latest,selected=0,labels=true,dirty=true;
-  const plantLabels=TARGETS.map(t=>{const label=document.createElement('span');label.className='plant-label';label.textContent=t.id;labelHost.append(label);return label;});
-  function disposeGroup(group) {while(group.children.length){const child=group.children[0];group.remove(child);child.traverse(n=>{n.geometry?.dispose();if(n.material)(Array.isArray(n.material)?n.material:[n.material]).forEach(m=>m.dispose());});}}
+  let jointMeshes=[],jointLabels=[],baseGroup,tool,latest,selected=0,labels=true,dirty=true,scenarioId=null,targetMeshes=[],targetLabels=[],viewMode='overview';
+  function disposeGroup(group){while(group.children.length){const child=group.children[0];group.remove(child);child.traverse(n=>{n.geometry?.dispose();if(n.material)(Array.isArray(n.material)?n.material:[n.material]).forEach(m=>m.dispose());});}}
+  function environment(id){
+    disposeGroup(props);targetLabels.forEach(label=>label.remove());const s=getScenario(id);
+    targetMeshes=buildEnvironment(s,{props,box,rod,mesh});targetLabels=s.targets.map(t=>{const label=document.createElement('span');label.className='plant-label';label.textContent=t.id;labelHost.append(label);return label;});
+    scene.userData.scenario=id;props.userData.scenario=id;scenarioId=id;
+    Object.assign(sun.shadow.camera,{left:-s.room.width/2-800,right:s.room.width/2+800,top:s.room.depth/2+800,bottom:-s.room.depth/2-800,far:20000});sun.shadow.camera.updateProjectionMatrix();
+  }
   function rebuild(model) {
     disposeGroup(robotGroup);jointLabels.forEach(l=>l.remove());jointLabels=[];jointMeshes=[];
     baseGroup=new THREE.Group();robotGroup.add(baseGroup);
@@ -88,9 +56,9 @@ export function createScene(host,onSelect) {
   }
   let topology='';
   function update(model,index=selected) {
-    selected=index;const key=`${model.base}:${model.joints.length}`;if(key!==topology){rebuild(model);topology=key;}
+    selected=index;const changed=scenarioId!==model.scenario;if(changed)environment(model.scenario);const key=`${model.base}:${model.joints.length}`;if(key!==topology){rebuild(model);topology=key;}
     latest={model,f:forward(model),observation:observe(model)};const {f,observation}=latest;
-    baseGroup.position.set(model.rover.x,model.rover.y,0);baseGroup.rotation.z=model.rover.yaw*Math.PI/180;
+    const anchor=getScenario(model.scenario).anchor;baseGroup.position.set(model.base==='rover'?model.rover.x:anchor[0],model.base==='rover'?model.rover.y:anchor[1],0);baseGroup.rotation.z=model.base==='rover'?model.rover.yaw*Math.PI/180:0;
     jointMeshes.forEach((m,i)=>{
       m.joint.position.copy(vec(f.origins[i]));m.axle.position.copy(vec(f.origins[i]));m.axle.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),vec(f.axes[i]));
       placeRod(m.link,f.origins[i],f.ends[i]);m.cuff.position.copy(vec(f.ends[i]));
@@ -107,27 +75,30 @@ export function createScene(host,onSelect) {
       const before=selected?f.frames[selected-1]:[Math.cos(model.rover.yaw*Math.PI/180),-Math.sin(model.rover.yaw*Math.PI/180),0,Math.sin(model.rover.yaw*Math.PI/180),Math.cos(model.rover.yaw*Math.PI/180),0,0,0,1];
       for(const [name,basis]of Object.entries({x:[1,0,0],y:[0,1,0],z:[0,0,1]}))selection.add(new THREE.ArrowHelper(vec(transform(before,basis)),pos,135,colours[name],20,10));
     }
-    observation.targets.forEach((o,i)=>{const color=o.aligned?0x3e9969:0xb49a54;targetMeshes[i].ring.material.color.setHex(color);targetMeshes[i].dot.material.color.setHex(color);plantLabels[i].classList.toggle('ready',o.aligned);});
-    dirty=true;
+    observation.targets.forEach((o,i)=>{const color=o.aligned?0x3e9969:0xb49a54;targetMeshes[i].ring.material.color.setHex(color);targetMeshes[i].dot.material.color.setHex(color);targetLabels[i].classList.toggle('ready',o.aligned);});
+    if(changed)overview();dirty=true;
   }
   function labelAt(element,position,offset=0) {
     const p=vec(position).project(camera);element.hidden=!labels||p.z<-1||p.z>1||Math.abs(p.x)>.96||Math.abs(p.y)>.96;
     element.style.left=`${(p.x+1)*host.clientWidth/2}px`;element.style.top=`${(-p.y+1)*host.clientHeight/2+offset}px`;
   }
   function home() {
+    viewMode='robot';
     const f=latest?.f;
     const target=f?vec(f.tip).add(vec(f.origins[0])).multiplyScalar(.5):vec([0,0,700]);
     target.z=Math.max(650,target.z);controls.target.copy(target);
     const spread=f?Math.max(1100,...f.origins.map(p=>vec(p).distanceTo(target)),vec(f.tip).distanceTo(target)):1100;
     const d=Math.max(3400,spread*3);camera.position.copy(target).add(vec([d*.86,-d*.96,d*.76]));controls.update();dirty=true;
   }
-  function top() {controls.target.set(0,0,600);camera.position.set(0,-.01,6500);controls.update();dirty=true;}
+  function overview(){viewMode='overview';const s=getScenario(scenarioId||'workshop'),direction=vec([.72,-.72,.8]).normalize();controls.target.set(0,0,450);let d=Math.max(s.room.width,s.room.depth);for(let k=0;k<12;k++){camera.position.copy(controls.target).addScaledVector(direction,d);controls.update();camera.updateMatrixWorld();let ratio=1;for(const x of[-s.room.width/2,s.room.width/2])for(const y of[-s.room.depth/2,s.room.depth/2])for(const z of[0,1500]){const p=vec([x,y,z]).project(camera);ratio=Math.max(ratio,Math.abs(p.x)/.88,Math.abs(p.y)/.78);}if(ratio<=1)break;d*=ratio*1.03;}dirty=true;}
+  function top(){viewMode='plan';const s=getScenario(scenarioId||'workshop'),d=Math.max(s.room.depth,s.room.width/camera.aspect)/(2*Math.tan(camera.fov*Math.PI/360))*1.15;controls.target.set(0,0,400);camera.position.set(0,-.01,d+400);controls.update();dirty=true;}
   let down=null;const raycaster=new THREE.Raycaster();
   renderer.domElement.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];});
   renderer.domElement.addEventListener('pointerup',e=>{if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;const rect=renderer.domElement.getBoundingClientRect();raycaster.setFromCamera(new THREE.Vector2((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1),camera);const hit=raycaster.intersectObjects(robotGroup.children,true).find(h=>Number.isInteger(h.object.userData.joint));if(hit)onSelect(hit.object.userData.joint);});
-  const resize=new ResizeObserver(()=>{renderer.setSize(host.clientWidth,host.clientHeight);camera.aspect=host.clientWidth/Math.max(1,host.clientHeight);camera.updateProjectionMatrix();dirty=true;});resize.observe(host);
+  const resize=new ResizeObserver(()=>{renderer.setSize(host.clientWidth,host.clientHeight);camera.aspect=host.clientWidth/Math.max(1,host.clientHeight);camera.updateProjectionMatrix();if(viewMode==='overview')overview();else if(viewMode==='plan')top();dirty=true;});resize.observe(host);
+  controls.addEventListener('start',()=>{viewMode='free';});
   controls.addEventListener('change',()=>{dirty=true;});
-  renderer.setAnimationLoop(()=>{controls.update();if(!dirty)return;dirty=false;if(latest){jointLabels.forEach((l,i)=>labelAt(l,latest.f.origins[i],-39));plantLabels.forEach((l,i)=>labelAt(l,TARGETS[i].position,-35));}renderer.render(scene,camera);});
+  renderer.setAnimationLoop(()=>{controls.update();if(!dirty)return;dirty=false;if(latest){jointLabels.forEach((l,i)=>labelAt(l,latest.f.origins[i],-39));targetLabels.forEach((l,i)=>labelAt(l,getScenario(scenarioId).targets[i].position,-35));}renderer.render(scene,camera);});
   home();
-  return {supported:true,update,home,top,setLabels(value){labels=value;dirty=true;},dispose(){resize.disconnect();renderer.setAnimationLoop(null);controls.dispose();scene.traverse(n=>{n.geometry?.dispose();if(n.material)(Array.isArray(n.material)?n.material:[n.material]).forEach(m=>m.dispose());});renderer.dispose();renderer.domElement.remove();labelHost.remove();}};
+  return {supported:true,update,home,top,overview,setLabels(value){labels=value;dirty=true;},dispose(){resize.disconnect();renderer.setAnimationLoop(null);controls.dispose();scene.traverse(n=>{n.geometry?.dispose();if(n.material)(Array.isArray(n.material)?n.material:[n.material]).forEach(m=>m.dispose());});renderer.dispose();renderer.domElement.remove();labelHost.remove();}};
 }
