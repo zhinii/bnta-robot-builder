@@ -1,0 +1,18 @@
+{
+  "name": "bnta-robot-builder",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bilingual robot design studio with a six-slot budget, rover trade-offs and evidence-based reflection.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Christopher Hansen",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "start": "node robot-builder/serve.mjs",
+    "test": "node scripts/test.mjs",
+    "test:model": "node --test robot-builder/tests/model.test.mjs",
+    "test:dom": "node robot-builder/tests/dom.mjs",
+    "test:lesson": "node --test beginner-3axis/tests/teacher.test.mjs"
+  },
+  "devDependencies": { "jsdom": "26.1.0" }
+}

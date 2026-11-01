@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Robot Lab · Guided 3D lesson / 引导式3D课堂</title>
+  <link rel="stylesheet" href="./teacher.css">
+  <script type="importmap">{"imports":{"three":"./vendor/three/build/three.module.js"}}</script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><strong data-copy="title"></strong><span data-copy="subtitle"></span></div>
+    <div class="model-switch" role="group" aria-label="Mechanism / 机构"><button id="model3" data-copy="three" aria-pressed="true"></button><button id="model6" data-copy="six" aria-pressed="false"></button></div>
+    <select id="language" aria-label="Language / 语言"><option value="en">EN</option><option value="zh">中文</option></select>
+    <button id="fullscreen" data-copy="fullscreen"></button>
+  </header>
+  <main>
+    <section id="world" aria-label="Interactive demonstration / 交互演示">
+      <div id="arm-view"></div><div id="type-view" hidden></div>
+      <div class="stage-top"><span id="scene-title"></span><span id="mode-note"></span></div>
+      <div id="no3d" hidden data-copy="no3D"></div>
+      <div class="view-tools"><button id="labels" data-copy="labels" aria-pressed="true"></button><button id="home" data-copy="home"></button></div>
+      <div id="part-card" hidden><span id="part-kicker"></span><strong id="part-title"></strong><p id="part-description"></p></div>
+      <div id="readout" aria-label="Actual model values / 模型实际数值"></div>
+      <span id="orbit-hint" data-copy="hint"></span>
+    </section>
+    <aside id="lesson">
+      <div class="lesson-heading"><span id="counter"></span><button id="outline-toggle" data-copy="outline" aria-expanded="false" aria-controls="outline"></button></div>
+      <nav id="outline" hidden aria-label="Lesson sequence / 课程顺序"></nav>
+      <div class="lesson-scroll">
+        <span id="phase"></span><h1 id="slide-title"></h1><p id="slide-text"></p>
+        <div id="type-options" hidden></div>
+        <details id="optional-types" hidden><summary data-copy="optionalTypes"></summary><div id="optional-type-options"></div></details>
+        <div id="type-description" hidden></div>
+        <details id="demo-details" hidden><summary data-copy="details"></summary><p id="demo-detail-text"></p></details>
+        <div class="question"><span data-copy="predict"></span><h2 id="question"></h2></div>
+        <div id="result" role="status" hidden></div>
+        <div id="discussion" hidden></div>
+        <details id="review-evidence" hidden><summary data-copy="evidence"></summary><div id="evidence-options"></div></details>
+        <details id="parts"><summary data-copy="selectPart"></summary><div id="part-options"></div></details>
+      </div>
+      <div class="demo-actions"><button id="demo" class="primary" data-copy="run"></button><button id="discuss" data-copy="discuss" hidden></button><button id="solution" class="primary" data-copy="solve" hidden></button><button id="reset-demo" data-copy="replay" hidden></button><button id="stop" data-copy="stop" disabled></button></div>
+      <footer><button id="previous" data-copy="previous"></button><span id="lesson-progress"></span><button id="next" data-copy="next"></button></footer>
+    </aside>
+  </main>
+  <script type="module" src="./teacher.mjs"></script>
+</body>
+</html>
