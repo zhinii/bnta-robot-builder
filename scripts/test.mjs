@@ -11,6 +11,7 @@ let server;
 try {
   await run(['--test','robot-builder/tests/model.test.mjs','beginner-3axis/tests/teacher.test.mjs']);
   await run(['robot-builder/tests/dom.mjs']);
+  await run(['robot-builder/tests/dom.mjs','--legacy-workspace']);
   server=spawn(process.execPath,['robot-builder/serve.mjs'],{cwd,env:{...process.env,ROBOT_BUILDER_PORT:'0'},stdio:['ignore','pipe','inherit'],windowsHide:true});
   const url=await new Promise((resolve,reject)=>{
     let output='';const timeout=setTimeout(()=>reject(Error('Asset-check server timed out')),10000);

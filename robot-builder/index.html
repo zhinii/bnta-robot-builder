@@ -19,6 +19,7 @@
       <div id="scene"><div id="no3d" hidden data-copy="no3d"></div></div>
       <div class="scene-tools"><button id="view-all" data-copy="sceneView"></button><button id="view-home" data-copy="homeView"></button><button id="view-top" data-copy="topView"></button><button id="labels" aria-pressed="true" data-copy="labels"></button></div>
       <div class="scene-hint" data-copy="sceneHint"></div>
+      <div id="placement-hint" hidden role="status" data-copy="placeHint"></div>
       <div id="geometry-warning" hidden role="status"></div>
       <div class="readout"><div><span data-copy="cameraPosition"></span><strong id="tip-position"></strong></div><div><span data-copy="selectedAxis"></span><strong id="axis-readout"></strong></div><div class="scale-note"><span data-copy="units"></span><strong data-copy="grid"></strong></div></div>
     </section>
@@ -32,6 +33,12 @@
           <div class="section-heading"><h2 data-copy="base"></h2><span data-copy="baseChoice"></span></div>
           <div class="base-options"><button id="fixed-base"><span class="base-symbol">⊥</span><strong data-copy="fixed"></strong><small data-copy="freeBase"></small></button><button id="rover-base"><span class="base-symbol">▰</span><strong data-copy="rover"></strong><small data-copy="oneSlot"></small></button></div>
           <p id="base-help" class="help"></p>
+          <section id="mount-controls" class="mount-controls">
+            <div class="section-heading"><h2 data-copy="mountTitle"></h2><button id="place-base" class="text-button" data-copy="placeBase" aria-pressed="false"></button></div>
+            <p class="help" data-copy="mountHelp"></p>
+            <div class="mount-fields"><label for="mount-x">X · mm<input id="mount-x" type="number" step="50"></label><label for="mount-y">Y · mm<input id="mount-y" type="number" step="50"></label><label for="mount-yaw"><span data-copy="mountYaw"></span><input id="mount-yaw" type="number" step="15" min="-180" max="180"></label></div>
+            <button id="apply-mount" data-copy="applyMount"></button>
+          </section>
           <div class="section-heading"><h2 data-copy="chain"></h2><button id="add-joint" class="text-button" data-copy="add"></button></div>
           <div id="joint-list" class="joint-list" aria-label="Arm joints / 机械臂关节"></div>
           <section class="joint-editor"><div class="section-heading"><h2 id="joint-title"></h2><button id="remove-joint" class="text-button danger" data-copy="remove"></button></div>
@@ -43,6 +50,7 @@
           <div class="thinking-prompt"><span data-copy="lessonConnection"></span><p data-copy="buildPrompt"></p></div>
         </section>
         <section id="test-panel" hidden>
+          <p id="mount-locked" class="thinking-prompt"></p>
           <div class="section-heading"><h2 data-copy="moveJoints"></h2><button id="reset-pose" class="text-button" data-copy="resetPose"></button></div><p class="help" data-copy="testHelp"></p><div id="joint-controls"></div>
           <section id="rover-controls" hidden><div class="section-heading"><h2 data-copy="drive"></h2><span id="rover-position"></span></div><p class="help" data-copy="driveHelp"></p><div class="drive-controls"><button id="forward" data-copy="forward"></button><button id="left" data-copy="left"></button><button id="backward" data-copy="backward"></button><button id="right" data-copy="right"></button></div></section>
           <div class="section-heading"><h2 data-copy="inspect"></h2><span data-copy="feedback"></span></div><p class="help" data-copy="inspectHelp"></p><div id="target-readings"></div>

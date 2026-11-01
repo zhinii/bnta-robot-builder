@@ -26,11 +26,11 @@ With a rover, **3 joints + 1,000 mm of links**, **4 + 800 mm**, and **5 + 600 mm
 
 | Scene | Task | Design trade-off |
 | --- | --- | --- |
-| Disaster-site inspection | Inspect three openings along a damaged corridor | Distances favor a rover; debris constrains travel. |
+| Greenhouse plant inspection | Inspect plants along a long growing aisle | Distances favor a rover; raised beds constrain travel. |
 | Workshop quality inspection | Inspect three components on a compact workbench | A simple fixed arm can do the job without paying for base travel. |
-| Museum collection inspection | Inspect three displays at different heights | Both fixed and mobile solutions fit the budget. |
+| Hospital supply inspection | Inspect supply labels and an equipment display at different heights | Both fixed and mobile solutions fit the budget. |
 
-Choosing a task rebuilds the 3D environment, inspection targets, collision fixtures and starting position. Each task keeps its own design, notes and comparison snapshots. Both bases remain selectable; the environment and price trade-offs create the advantages. Student cards describe the task rather than announce a preferred answer.
+Choosing a task rebuilds the 3D environment, inspection targets, collision fixtures and starting position. Each task keeps its own design, notes and comparison snapshots. Both bases remain selectable; the environment and price trade-offs create the advantages. Student cards describe the task rather than announce a preferred answer. A fixed arm can be installed anywhere its full base fits on clear floor. Students choose its X/Y position and heading in Build by clicking the floor or entering coordinates. Placement stays locked in Test; returning to Build allows revision. Placement is free and saved with each design and comparison.
 
 ## Run locally
 
@@ -48,12 +48,12 @@ The application needs no dependency installation to run. Three.js is included lo
 
 ## Student experience
 
-- **Build:** buy or remove joints, choose one of five link lengths, select local rotation axes and set rotation limits. Watch the parts bill and remaining budget update.
-- **Test:** move each joint, drive and turn the rover, and compare camera position and direction against three plant inspection points.
+- **Build:** choose a base and its fixed installation location, buy or remove joints, choose one of five link lengths, select local rotation axes and set rotation limits. Watch the parts bill and remaining budget update.
+- **Test:** move each joint, drive and turn the rover, and compare camera position and direction against the selected scene’s three inspection points.
 - **Explain:** predict, justify a choice, record observations and propose a revision. Keep up to six design snapshots for comparison.
 - **Save:** export/import the selected task's robot, pose, reflections and comparisons. All three task drafts are kept separately in the browser; student work is not uploaded.
 
-These are fictional exploratory inspection contexts. There is no timer, prescribed robot or automatic grade. Measurements support discussion; reaching a target is not proof of a clear route or a successful physical robot. Earlier greenhouse files retain their geometry and writing when migrated into the museum scene, with a visible migration notice. Designs above the new budget remain editable but cannot be tested until their cost is reduced.
+These are fictional exploratory inspection contexts. There is no timer, prescribed robot or automatic grade. Measurements support discussion; reaching a target is not proof of a clear route or a successful physical robot. Earlier files retain their geometry and writing with a visible migration notice: the original greenhouse returns to the expanded greenhouse, the disaster scene becomes the greenhouse, and the museum becomes the hospital. Fixed installations from earlier versions start at their original marked positions; original version-1 placement resets to the new greenhouse start. Designs above the new budget remain editable but cannot be tested until their cost is reduced.
 
 See [the detailed builder guide](robot-builder/README.md) for lesson connections and model limits, or open [the guided lesson](beginner-3axis/teacher.html) through the local server.
 
@@ -66,7 +66,7 @@ npm ci --ignore-scripts
 npm test
 ```
 
-The suite checks kinematics, prices/refunds, the exact rover reach/articulation examples, slot limits, movement constraints, migration, per-task drafts, interface interactions, lesson behavior and HTTP dependencies. Scenario tests demonstrate a rover inspection route, an inexpensive fixed workshop design, and affordable alternatives for the museum. The DOM test checks scene graphs and overview projection at two canvas proportions with a stub renderer; it does not verify rendered pixels or responsive CSS layout.
+The suite checks kinematics, prices/refunds, the exact rover reach/articulation examples, slot limits, movement constraints, migration, per-task drafts, interface interactions, lesson behavior and HTTP dependencies. Scenario tests demonstrate a rover inspection route, an inexpensive fixed workshop design, and affordable alternatives for the hospital. The suite also checks rotated base footprints, changed reach, numeric and floor-click installation, Test locking, saved locations and undo. The DOM test checks scene graphs and overview projection at two canvas proportions with a stub renderer; it does not verify rendered pixels or responsive CSS layout.
 
 Visual WebGL and responsive-layout review are still pending. The model does not simulate self-collision, full swept paths, dynamics, balance, motor loads or actual camera images. Current-pose floor/bench overlap feedback is simplified. There is no physical-robot connection.
 

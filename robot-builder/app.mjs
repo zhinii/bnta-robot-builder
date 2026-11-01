@@ -1,34 +1,37 @@
 import {COPY} from './i18n.mjs';
-import {starter,clone,validateRobot,usedSlots,setBase,addJoint,removeJoint,changeJoint,observe,drive,readProject,SLOT_LIMIT,PRICES,LENGTHS,price,baseStart,getScenario,SCENARIO_IDS} from './model.mjs';
+import {starter,clone,validateRobot,usedSlots,setBase,addJoint,removeJoint,changeJoint,observe,drive,readProject,readWorkspace,SLOT_LIMIT,PRICES,LENGTHS,price,baseStart,getScenario,SCENARIO_IDS,fixedMount,placeFixed} from './model.mjs';
 import {createScene} from './scene.mjs';
 const $=id=>document.getElementById(id),STORAGE='robot-builder.workspace.v2',OLD_STORAGE='robot-builder.project.v1',LANGUAGE='robot-builder.language';
 const emptyNotes=()=>({prediction:'',choice:'',observation:'',revision:''});
-let language='en',robot=starter(),notes=emptyNotes(),evidence=[],selected=0,mode='build',history=[],poseBefore=null,saved=false,legacy=false,drafts={},hasDraft=false;
+let language='en',robot=starter(),notes=emptyNotes(),evidence=[],selected=0,mode='build',history=[],poseBefore=null,saved=false,legacy=false,drafts={},hasDraft=false,placing=false;
 function load(p){robot=p.robot;notes=p.notes;evidence=p.evidence;legacy=p.legacy===true;}
 try{
   language=localStorage.getItem(LANGUAGE)==='zh'?'zh':'en';
   const raw=localStorage.getItem(STORAGE);
-  if(raw){const data=JSON.parse(raw);if(data.version!==2||data.kind!=='robot-builder-workspace')throw Error('workspace');for(const id of SCENARIO_IDS){if(data.drafts?.[id]){const p=readProject(data.drafts[id]);if(p.robot.scenario!==id)throw Error('scenario');drafts[id]=p;}}if(SCENARIO_IDS.includes(data.activeScenario)&&Object.hasOwn(drafts,data.activeScenario)){load(clone(drafts[data.activeScenario]));hasDraft=true;saved=true;}}
+  if(raw){const data=JSON.parse(raw),workspace=readWorkspace(data);if(data.drafts?.rescue||data.drafts?.museum){try{localStorage.setItem(STORAGE+'.before-scenarios',raw);}catch{}}drafts=workspace.drafts;if(workspace.activeScenario&&Object.hasOwn(drafts,workspace.activeScenario)){load(clone(drafts[workspace.activeScenario]));hasDraft=true;saved=true;}}
   else{const old=localStorage.getItem(OLD_STORAGE);if(old){load(readProject(JSON.parse(old)));hasDraft=true;}}
 }catch{try{const backup=localStorage.getItem(STORAGE);if(backup)localStorage.setItem(STORAGE+'.recovery',backup);}catch{}}
 const t=key=>COPY[key]?.[language]??key;
 const money=n=>'$'+Math.round(n).toLocaleString('en-US');
 const project=()=>({kind:'robot-builder',version:2,robot:clone(robot),notes:{...notes},evidence:clone(evidence),...(legacy?{legacy:true}:{})});
-const scene=createScene($('scene'),i=>selectJoint(i));$('no3d').hidden=scene.supported;
+const scene=createScene($('scene'),i=>selectJoint(i),(x,y)=>{
+  if(mode!=='build'||robot.base!=='fixed'||!placing)return;
+  attempt(()=>{const next=placeFixed(robot,{...fixedMount(robot),x,y});placing=false;edit(next);notify('placed');});
+});$('no3d').hidden=scene.supported;
 function persist(){drafts[robot.scenario]=project();try{localStorage.setItem(STORAGE,JSON.stringify({kind:'robot-builder-workspace',version:2,activeScenario:robot.scenario,drafts}));saved=true;}catch{saved=false;}$('save-status').textContent=t(saved?'saved':'notSaved');}
 let messageTimer;
 function notify(key){clearTimeout(messageTimer);const message=$('message');message.textContent=t(key);message.hidden=false;messageTimer=setTimeout(()=>message.hidden=true,5500);}
 function remember(previous){if(JSON.stringify(previous)!==JSON.stringify(robot)){history.push(previous);if(history.length>60)history.shift();}$('undo').disabled=history.length===0;}
 function finishPoseEdit(){if(poseBefore){remember(poseBefore);poseBefore=null;persist();}}
 function edit(next){finishPoseEdit();const previous=clone(robot);robot=validateRobot(next);remember(previous);selected=Math.min(selected,robot.joints.length-1);persist();render();}
-function attempt(fn){try{fn();}catch(error){notify(error.message==='funds'?'funds':error.message==='slots'?'roverFull':'invalid');render();}}
+function attempt(fn){try{fn();}catch(error){notify(error.message==='placement'?'placementBlocked':error.message==='funds'?'funds':error.message==='slots'?'roverFull':'invalid');render();}}
 function possible(fn){try{fn();return true;}catch{return false;}}
 function selectJoint(index){finishPoseEdit();selected=index;render();}
-function setMode(next){finishPoseEdit();mode=next;render();}
+function setMode(next){finishPoseEdit();placing=false;mode=next;render();}
 function node(tag,text,className){const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(className)el.className=className;return el;}
-function openPicker(){renderPicker();const dialog=$('scenario-picker');if(dialog.showModal)dialog.showModal();else dialog.setAttribute('open','');}
+function openPicker(){placing=false;renderMount();renderPicker();const dialog=$('scenario-picker');if(dialog.showModal)dialog.showModal();else dialog.setAttribute('open','');}
 function closePicker(){const dialog=$('scenario-picker');if(dialog.close)dialog.close();else dialog.removeAttribute('open');}
-function switchScenario(id){finishPoseEdit();persist();load(drafts[id]?readProject(clone(drafts[id])):{robot:starter(id),notes:emptyNotes(),evidence:[]});history=[];selected=0;mode='build';persist();render();scene.overview();closePicker();}
+function switchScenario(id){finishPoseEdit();persist();load(drafts[id]?readProject(clone(drafts[id])):{robot:starter(id),notes:emptyNotes(),evidence:[]});history=[];selected=0;mode='build';placing=false;persist();render();scene.overview();closePicker();}
 function renderPicker(){
   $('scenario-cards').replaceChildren(...SCENARIO_IDS.map((id,i)=>{const scenario=getScenario(id),button=node('button',undefined,`scenario-card scenario-${id}`);button.dataset.scenario=id;button.setAttribute('aria-pressed',String(id===robot.scenario));const art=node('span',undefined,'scenario-art');art.setAttribute('aria-hidden','true');for(let n=0;n<5;n++)art.append(node('i'));button.append(art,node('span',`0${i+1}`,'scenario-number'),node('strong',scenario.title[language]),node('span',scenario.tag[language],'scenario-description'),node('small',drafts[id]?t('resumeScene'):t('enterScene')));button.onclick=()=>switchScenario(id);return button;}));
 }
@@ -39,6 +42,13 @@ function renderBudget(){
   const slots=robot.joints.map((_,i)=>({label:`J${i+1}`,mobile:false}));if(robot.base==='rover')slots.unshift({label:t('rover'),mobile:true});
   $('slots').replaceChildren(...Array.from({length:SLOT_LIMIT},(_,i)=>{const entry=slots[i],span=node('span',entry?.label??'·',entry?`used${entry.mobile?' mobile':''}`:'');span.title=entry?.label??t('emptySlot');return span;}));
   $('receipt').replaceChildren();for(const [label,value]of [[t(robot.base==='rover'?'rover':'fixed'),p.base],[`${robot.joints.length} × ${t('joint')} (${money(PRICES.joint)})`,p.joints],[`${p.linkLength} mm × $0.50`,p.links],[t('includedTool'),0]])$('receipt').append(node('dt',label),node('dd',money(value)));
+}
+function mountText(model){const m=fixedMount(model);return `X ${Math.round(m.x)} · Y ${Math.round(m.y)} mm · ${Math.round(m.yaw)}°`;}
+function renderMount(){
+  const m=fixedMount(robot),active=robot.base==='fixed'&&mode==='build';if(!active)placing=false;
+  $('mount-controls').hidden=robot.base!=='fixed';$('mount-locked').hidden=robot.base!=='fixed';$('mount-locked').textContent=`${t('mountLocked')} ${mountText(robot)}`;
+  const s=getScenario(robot.scenario);for(const [id,key,range]of [['mount-x','x',s.room.width/2],['mount-y','y',s.room.depth/2],['mount-yaw','yaw',180]]){$(id).value=m[key];$(id).min=-range;$(id).max=range;$(id).disabled=!active;}
+  $('apply-mount').disabled=!active;$('place-base').disabled=!active||!scene.supported;$('place-base').textContent=t(placing?'cancelPlace':'placeBase');$('place-base').setAttribute('aria-pressed',String(placing));$('placement-hint').hidden=!placing;scene.setPlacement(placing);
 }
 function render(){
   document.documentElement.lang=language==='zh'?'zh-CN':'en';document.title=`Robot Lab · ${t('title')}`;document.querySelectorAll('[data-copy]').forEach(el=>el.textContent=t(el.dataset.copy));$('language').value=language;
@@ -55,7 +65,7 @@ function render(){
   $('link-length').replaceChildren(...lengths.map(length=>{const option=node('option',`${length} mm · ${money(length*PRICES.perMillimetre)}${!LENGTHS.includes(length)?' · '+t('legacyLength'):''}`);option.value=length;option.disabled=length!==j.length&&!possible(()=>changeJoint(robot,selected,{length}));return option;}));
   $('link-length').value=j.length;$('link-direction').value=j.direction;$('limit-min').value=j.min;$('limit-max').value=j.max;
   for(const id of ['joint-angle','joint-angle-number']){$(id).min=j.min;$(id).max=j.max;$(id).value=robot.pose[selected];}$('joint-angle').setAttribute('aria-label',`${t('joint')} ${selected+1} ${t('pose')}`);
-  renderTest();for(const key of Object.keys(notes))$(`note-${key}`).value=notes[key];renderEvidence();$('save-status').textContent=t(saved?'saved':'notSaved');$('undo').disabled=!history.length;readouts();
+  renderTest();for(const key of Object.keys(notes))$(`note-${key}`).value=notes[key];renderEvidence();$('save-status').textContent=t(saved?'saved':'notSaved');$('undo').disabled=!history.length;readouts();renderMount();
 }
 function renderTest(){
   const affordable=price(robot).affordable;
@@ -73,12 +83,15 @@ function readouts(){
 }
 function renderEvidence(){
   $('evidence-list').replaceChildren();if(!evidence.length){$('evidence-list').append(node('p',t('emptyEvidence'),'help'));return;}
-  evidence.forEach((entry,index)=>{const card=node('article',undefined,'evidence-card'),header=node('header'),p=price(entry.robot);header.append(node('strong',`${t('design')} ${index+1}`),node('span',`${money(p.total)} · ${t(entry.robot.base==='rover'?'rover':'fixed')}`));card.append(header,node('p',`${usedSlots(entry.robot)}/6 ${t('slots')} · ${p.linkLength} mm ${t('linkTotal')}`));card.append(node('p',entry.legacy?t('legacyEvidence'):observe(entry.robot).targets.map(target=>`${target.id}: ${Math.round(target.distance)} mm / ${Math.round(target.angle)}°`).join(' · ')));if(entry.note)card.append(node('p',entry.note));const actions=node('div',undefined,'evidence-actions'),restore=node('button',t('restore')),remove=node('button',t('delete'));restore.onclick=()=>{edit(entry.robot);notify('restored');};remove.onclick=()=>{evidence.splice(index,1);persist();renderEvidence();};actions.append(restore,remove);card.append(actions);$('evidence-list').append(card);});
+  evidence.forEach((entry,index)=>{const card=node('article',undefined,'evidence-card'),header=node('header'),p=price(entry.robot);header.append(node('strong',`${t('design')} ${index+1}`),node('span',`${money(p.total)} · ${t(entry.robot.base==='rover'?'rover':'fixed')}`));card.append(header,node('p',`${usedSlots(entry.robot)}/6 ${t('slots')} · ${p.linkLength} mm ${t('linkTotal')}`));card.append(node('p',entry.legacy?t('legacyEvidence'):observe(entry.robot).targets.map(target=>`${target.id}: ${Math.round(target.distance)} mm / ${Math.round(target.angle)}°`).join(' · ')));if(entry.robot.base==='fixed')card.append(node('p',`${t('mountTitle')}: ${mountText(entry.robot)}`));if(entry.note)card.append(node('p',entry.note));const actions=node('div',undefined,'evidence-actions'),restore=node('button',t('restore')),remove=node('button',t('delete'));restore.onclick=()=>{mode='build';placing=false;edit(entry.robot);notify('restored');};remove.onclick=()=>{evidence.splice(index,1);persist();renderEvidence();};actions.append(restore,remove);card.append(actions);$('evidence-list').append(card);});
 }
 $('scenario-switch').onclick=openPicker;$('picker-close').onclick=closePicker;
 $('build-mode').onclick=()=>setMode('build');$('test-mode').onclick=()=>setMode('test');$('think-mode').onclick=()=>setMode('think');
 $('language').onchange=()=>{finishPoseEdit();language=$('language').value;try{localStorage.setItem(LANGUAGE,language);}catch{}render();};
-$('fixed-base').onclick=()=>attempt(()=>edit(setBase(robot,'fixed')));$('rover-base').onclick=()=>attempt(()=>edit(setBase(robot,'rover')));
+$('fixed-base').onclick=()=>attempt(()=>{placing=false;edit(setBase(robot,'fixed'));});$('rover-base').onclick=()=>attempt(()=>{placing=false;edit(setBase(robot,'rover'));});
+$('place-base').onclick=()=>{if(mode!=='build'||robot.base!=='fixed')return;placing=!placing;renderMount();if(placing)$('scene').scrollIntoView?.({block:'center'});};
+$('apply-mount').onclick=()=>{if(mode!=='build'||robot.base!=='fixed')return;attempt(()=>{const mount={};for(const key of ['x','y','yaw']){const input=$('mount-'+key);if(input.value.trim()==='')throw Error('placement');mount[key]=Number(input.value);}const next=placeFixed(robot,mount);placing=false;edit(next);notify('placed');});};
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&placing){placing=false;renderMount();}});
 $('add-joint').onclick=()=>attempt(()=>{const next=addJoint(robot);selected=next.joints.length-1;edit(next);});$('remove-joint').onclick=()=>attempt(()=>edit(removeJoint(robot,selected)));
 $('robot-name').onchange=()=>{const next=clone(robot);next.name=$('robot-name').value;edit(next);};
 document.querySelectorAll('[data-axis]').forEach(button=>button.onclick=()=>attempt(()=>edit(changeJoint(robot,selected,{axis:button.dataset.axis}))));
@@ -87,12 +100,12 @@ for(const[id,key]of[['limit-min','min'],['limit-max','max']])$(id).onchange=()=>
 $('joint-angle').oninput=()=>previewAngle(selected,Number($('joint-angle').value));$('joint-angle').onchange=finishPoseEdit;$('joint-angle-number').onchange=()=>commitAngle(selected,$('joint-angle-number').value);
 $('reset-pose').onclick=()=>{const next=clone(robot);next.pose=robot.joints.map(j=>j.home);next.rover=baseStart(robot.scenario,robot.base);edit(next);};
 for(const[id,amount,turn]of[['forward',100,0],['backward',-100,0],['left',0,15],['right',0,-15]])$(id).onclick=()=>{const result=drive(robot,amount,turn);if(result.ok)edit(result.robot);else notify('blocked');};
-$('undo').onclick=()=>{finishPoseEdit();if(history.length){robot=history.pop();selected=Math.min(selected,robot.joints.length-1);persist();render();}};
+$('undo').onclick=()=>{finishPoseEdit();if(history.length){const previous=history.pop();if(JSON.stringify(fixedMount(robot))!==JSON.stringify(fixedMount(previous)))mode='build';robot=previous;placing=false;selected=Math.min(selected,robot.joints.length-1);persist();render();}};
 for(const key of Object.keys(notes))$(`note-${key}`).oninput=()=>{notes[key]=$(`note-${key}`).value;persist();};
 $('record').onclick=()=>{finishPoseEdit();if(evidence.length>=6){notify('fullEvidence');return;}evidence.push({robot:clone(robot),note:notes.observation});persist();renderEvidence();notify('recorded');};
 $('brief-toggle').onclick=()=>{$('brief').hidden=!$('brief').hidden;$('brief-toggle').setAttribute('aria-expanded',String(!$('brief').hidden));};
 $('view-home').onclick=()=>scene.home();$('view-top').onclick=()=>scene.top();$('view-all').onclick=()=>scene.overview();$('labels').onclick=()=>{const active=$('labels').getAttribute('aria-pressed')!=='true';$('labels').setAttribute('aria-pressed',String(active));scene.setLabels(active);};
-$('import').onclick=()=>$('file').click();$('file').onchange=async()=>{const file=$('file').files?.[0];if(!file)return;try{if(file.size>100000)throw Error('size');const parsed=readProject(JSON.parse(await file.text()));finishPoseEdit();persist();load(parsed);history=[];selected=0;persist();render();scene.overview();closePicker();notify(legacy?'legacyImported':'imported');}catch{notify('invalidFile');}finally{$('file').value='';}};
+$('import').onclick=()=>$('file').click();$('file').onchange=async()=>{const file=$('file').files?.[0];if(!file)return;try{if(file.size>100000)throw Error('size');const parsed=readProject(JSON.parse(await file.text()));finishPoseEdit();persist();load(parsed);history=[];selected=0;mode='build';placing=false;persist();render();scene.overview();closePicker();notify(legacy?'legacyImported':'imported');}catch{notify('invalidFile');}finally{$('file').value='';}};
 $('export').onclick=()=>{finishPoseEdit();persist();const blob=new Blob([JSON.stringify(project(),null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),anchor=document.createElement('a');anchor.href=url;anchor.download=(robot.name.replace(/[^\p{L}\p{N}_-]+/gu,'-').slice(0,65)||'robot-design')+'-'+robot.scenario+'.json';anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);notify('exported');};
 window.addEventListener('pagehide',()=>{finishPoseEdit();persist();});
 render();scene.overview();persist();if(!hasDraft)openPicker();
