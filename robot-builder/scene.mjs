@@ -5,13 +5,13 @@ import {buildEnvironment} from './environment.mjs';
 const vec=p=>new THREE.Vector3(...p);
 const colours={x:0xb2604c,y:0x448363,z:0x547eb8};
 export function createScene(host,onSelect,onPlace=()=>{}) {
-  const scene=new THREE.Scene();scene.background=new THREE.Color('#e9efe9');
+  const scene=new THREE.Scene();scene.background=new THREE.Color('#e3e9e6');
   const camera=new THREE.PerspectiveCamera(36,1,5,40000);camera.up.set(0,0,1);
   let renderer;
   try {renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});}
   catch {return {supported:false,update(){},home(){},top(){},overview(){},setPlacement(){},setLabels(){},dispose(){}};}
-  renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.75));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-  host.prepend(renderer.domElement);renderer.domElement.setAttribute('aria-label','Interactive robot and task environment / 可交互机器人与任务环境');renderer.domElement.setAttribute('role','img');
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.75));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
+  host.prepend(renderer.domElement);renderer.domElement.setAttribute('aria-label','Robot design challenge / 机器人设计挑战');renderer.domElement.setAttribute('role','img');
   const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.12;controls.minDistance=350;controls.maxDistance=25000;controls.maxPolarAngle=Math.PI*.49;
   scene.add(new THREE.HemisphereLight(0xffffff,0x6f8d73,2.4));
   const sun=new THREE.DirectionalLight(0xfff7df,3.2);sun.position.set(-1800,-1500,4300);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-2300,right:2300,top:2300,bottom:-2300,near:10,far:8000});sun.shadow.bias=-.0004;scene.add(sun);
@@ -24,12 +24,12 @@ export function createScene(host,onSelect,onPlace=()=>{}) {
   function placeRod(m,a,b) {const va=vec(a),vb=vec(b);m.position.copy(va).add(vb).multiplyScalar(.5);m.scale.y=va.distanceTo(vb);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),vb.sub(va).normalize());}
   function setFrame(obj,frame) {const m=new THREE.Matrix4().set(frame[0],frame[1],frame[2],0,frame[3],frame[4],frame[5],0,frame[6],frame[7],frame[8],0,0,0,0,1);obj.quaternion.setFromRotationMatrix(m);}
   const labelHost=document.createElement('div');labelHost.className='scene-labels';host.append(labelHost);
-  let jointMeshes=[],jointLabels=[],baseGroup,tool,latest,selected=0,labels=true,dirty=true,scenarioId=null,targetMeshes=[],targetLabels=[],viewMode='overview',placing=false;
+  let jointMeshes=[],jointLabels=[],baseGroup,tool,latest,selected=0,labels=true,dirty=true,scenarioId=null,environmentView=null,targetMeshes=[],targetLabels=[],viewMode='overview',placing=false;
   const placementGhost=mesh(new THREE.BoxGeometry(300,300,12),0x499978,scene,{transparent:true,opacity:.55,depthTest:false});placementGhost.visible=false;placementGhost.renderOrder=10;placementGhost.userData.placement=true;
   function disposeGroup(group){while(group.children.length){const child=group.children[0];group.remove(child);child.traverse(n=>{n.geometry?.dispose();if(n.material)(Array.isArray(n.material)?n.material:[n.material]).forEach(m=>m.dispose());});}}
   function environment(id){
     disposeGroup(props);targetLabels.forEach(label=>label.remove());const s=getScenario(id);
-    targetMeshes=buildEnvironment(s,{props,box,rod,mesh});targetLabels=s.targets.map(t=>{const label=document.createElement('span');label.className='plant-label';label.textContent=t.id;labelHost.append(label);return label;});
+    environmentView=buildEnvironment(s,{props,box,rod,mesh});targetMeshes=environmentView.targets;targetLabels=s.targets.map(t=>{const label=document.createElement('span');label.className='plant-label';label.textContent=t.id;labelHost.append(label);return label;});
     scene.userData.scenario=id;props.userData.scenario=id;scenarioId=id;
     Object.assign(sun.shadow.camera,{left:-s.room.width/2-800,right:s.room.width/2+800,top:s.room.depth/2+800,bottom:-s.room.depth/2-800,far:20000});sun.shadow.camera.updateProjectionMatrix();
   }
@@ -54,13 +54,21 @@ export function createScene(host,onSelect,onPlace=()=>{}) {
       jointMeshes.push({joint,axle,link,cuff});
       const label=document.createElement('button');label.type='button';label.className='joint-label';label.textContent=`J${i+1}`;label.setAttribute('aria-label',`Joint ${i+1} / 关节${i+1}`);label.onclick=()=>onSelect(i);labelHost.append(label);jointLabels.push(label);
     });
-    tool=new THREE.Group();robotGroup.add(tool);box([25,0,0],[50,54,42],0x354d42,tool);const lens=mesh(new THREE.CylinderGeometry(19,19,20,20),0x233e42,tool,{metalness:.6,roughness:.16});lens.rotation.z=Math.PI/2;lens.position.x=60;
-    const lensGlass=mesh(new THREE.SphereGeometry(15,16,12),0x72acb3,tool,{metalness:.6,roughness:.1});lensGlass.scale.set(.3,1,1);lensGlass.position.x=71;
+    tool=new THREE.Group();robotGroup.add(tool);
+    box([30,0,0],[60,48,44],0x3d6571,tool);
+    if(getScenario(model.scenario).tool==='water'){
+      rod([65,0,0],[65,0,-62],15,0xb6c6c5,tool);const rose=mesh(new THREE.CylinderGeometry(33,25,16,20),0x576c71,tool);rose.rotation.x=Math.PI/2;rose.position.set(65,0,-67);
+      rod([0,22,6],[-55,22,6],9,0x2d4541,tool);
+    }else{
+      for(const y of [-45,45]){box([65,y,-32],[18,16,60],0xaebfc2,tool);box([65,y/2,-63],[25,52,14],0x435956,tool);}
+      rod([0,0,0],[65,0,0],19,0xaebfc2,tool);
+    }
+
   }
   let topology='';
-  function update(model,index=selected) {
-    selected=index;const changed=scenarioId!==model.scenario;if(changed)environment(model.scenario);const key=`${model.base}:${model.joints.length}`;if(key!==topology){rebuild(model);topology=key;}
-    latest={model,f:forward(model),observation:observe(model)};const {f,observation}=latest;
+  function update(model,index=selected,task={}) {
+    selected=index;const changed=scenarioId!==model.scenario;if(changed)environment(model.scenario);const key=`${model.scenario}:${model.base}:${model.joints.length}`;if(key!==topology){rebuild(model);topology=key;}
+    latest={model,task,f:forward(model),observation:observe(model)};const {f,observation}=latest;
     const mount=fixedMount(model);baseGroup.position.set(model.base==='rover'?model.rover.x:mount.x,model.base==='rover'?model.rover.y:mount.y,0);baseGroup.rotation.z=(model.base==='rover'?model.rover.yaw:mount.yaw)*Math.PI/180;
     jointMeshes.forEach((m,i)=>{
       m.joint.position.copy(vec(f.origins[i]));m.axle.position.copy(vec(f.origins[i]));m.axle.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),vec(f.axes[i]));
@@ -94,7 +102,7 @@ export function createScene(host,onSelect,onPlace=()=>{}) {
     const spread=f?Math.max(1100,...f.origins.map(p=>vec(p).distanceTo(target)),vec(f.tip).distanceTo(target)):1100;
     const d=Math.max(3400,spread*3);camera.position.copy(target).add(vec([d*.86,-d*.96,d*.76]));controls.update();dirty=true;
   }
-  function overview(){viewMode='overview';const s=getScenario(scenarioId||'workshop'),direction=vec([.72,-.72,.8]).normalize();controls.target.set(0,0,450);let d=Math.max(s.room.width,s.room.depth);for(let k=0;k<12;k++){camera.position.copy(controls.target).addScaledVector(direction,d);controls.update();camera.updateMatrixWorld();let ratio=1;for(const x of[-s.room.width/2,s.room.width/2])for(const y of[-s.room.depth/2,s.room.depth/2])for(const z of[0,1500]){const p=vec([x,y,z]).project(camera);ratio=Math.max(ratio,Math.abs(p.x)/.88,Math.abs(p.y)/.78);}if(ratio<=1)break;d*=ratio*1.03;}dirty=true;}
+  function overview(){viewMode='overview';const s=getScenario(scenarioId||'cafeteria'),direction=vec([.72,-.72,.8]).normalize();controls.target.set(0,0,700);let d=Math.max(s.room.width,s.room.depth);for(let k=0;k<12;k++){camera.position.copy(controls.target).addScaledVector(direction,d);controls.update();camera.updateMatrixWorld();let ratio=1;for(const x of[-s.room.width/2,s.room.width/2])for(const y of[-s.room.depth/2,s.room.depth/2])for(const z of[0,s.room.height]){const p=vec([x,y,z]).project(camera);ratio=Math.max(ratio,Math.abs(p.x)/.88,Math.abs(p.y)/.78);}if(ratio<=1)break;d*=ratio*1.03;}dirty=true;}
   function top(){viewMode='plan';const s=getScenario(scenarioId||'workshop'),d=Math.max(s.room.depth,s.room.width/camera.aspect)/(2*Math.tan(camera.fov*Math.PI/360))*1.15;controls.target.set(0,0,400);camera.position.set(0,-.01,d+400);controls.update();dirty=true;}
   function setPlacement(value){const entering=value&&!placing;placing=value;controls.enabled=!value;renderer.domElement.style.cursor=value?'crosshair':'';placementGhost.visible=value;if(value&&latest){const mount=fixedMount(latest.model);placementGhost.position.set(mount.x,mount.y,8);placementGhost.rotation.z=mount.yaw*Math.PI/180;placementGhost.material.color.setHex(0x499978);}if(entering)top();dirty=true;}
   let down=null;const raycaster=new THREE.Raycaster(),floorPlane=new THREE.Plane(new THREE.Vector3(0,0,1),0);
@@ -107,7 +115,7 @@ export function createScene(host,onSelect,onPlace=()=>{}) {
   const resize=new ResizeObserver(()=>{renderer.setSize(host.clientWidth,host.clientHeight);camera.aspect=host.clientWidth/Math.max(1,host.clientHeight);camera.updateProjectionMatrix();if(viewMode==='overview')overview();else if(viewMode==='plan')top();dirty=true;});resize.observe(host);
   controls.addEventListener('start',()=>{viewMode='free';});
   controls.addEventListener('change',()=>{dirty=true;});
-  renderer.setAnimationLoop(()=>{controls.update();if(!dirty)return;dirty=false;if(latest){jointLabels.forEach((l,i)=>labelAt(l,latest.f.origins[i],-39));targetLabels.forEach((l,i)=>labelAt(l,getScenario(scenarioId).targets[i].position,-35));}renderer.render(scene,camera);});
+  renderer.setAnimationLoop((time=0)=>{controls.update();if(latest)environmentView?.update(latest.task,latest.model,latest.f,time);dirty=false;if(latest){jointLabels.forEach((l,i)=>labelAt(l,latest.f.origins[i],-39));targetLabels.forEach((l,i)=>labelAt(l,getScenario(scenarioId).targets[i].position,-35));}renderer.render(scene,camera);});
   home();
   return {supported:true,update,home,top,overview,setPlacement,setLabels(value){labels=value;dirty=true;},dispose(){resize.disconnect();renderer.setAnimationLoop(null);controls.dispose();scene.traverse(n=>{n.geometry?.dispose();if(n.material)(Array.isArray(n.material)?n.material:[n.material]).forEach(m=>m.dispose());});renderer.dispose();renderer.domElement.remove();labelHost.remove();}};
 }

@@ -1,87 +1,68 @@
 # BNTA Robot Builder
 
-**Design a robot. Test an idea. Explain the evidence.**
+**A robot design challenge for Grade 7.** Choose a real-world job, build within a parts budget, try the task and explain one design decision.
 
-A bilingual English/简体中文 robot design studio developed by Christopher Hansen, extending the [Robot Lab](https://github.com/zhinii/bnta-robotics) guided lessons. Students choose a task, buy joints and links within a classroom budget, test their robot in that environment, and explain the trade-offs behind their design.
+**[Open Robot Builder](https://zhinii.github.io/bnta-robot-builder/)** · [Guided robot lesson](https://zhinii.github.io/bnta-robot-builder/beginner-3axis/teacher.html)
 
-**[Open Robot Builder](https://zhinii.github.io/bnta-robot-builder/)** · [Open the guided lesson](https://zhinii.github.io/bnta-robot-builder/beginner-3axis/teacher.html)
+## Three useful jobs
 
-Each task has **$1,200 of classroom money** and **six design slots**:
+| Scene | Student task | What the environment encourages |
+| --- | --- | --- |
+| Greenhouse | Water six marked plants, on both sides of a long aisle | Mobility: one affordable fixed arm cannot cover both ends. |
+| Cafeteria | Move three trays from a conveyor onto a washer loading rack | A compact fixed arm can reach both machines. |
+| Hospital | Bring a book from a cabinet to a table within a seated person's reach | Both a fixed arm and a shorter arm on a rover can work. |
 
-- A fixed base permits up to **six arm joints**.
-- A rover uses **one slot**, leaving up to **five arm joints**.
-- Students do not need to use every slot. This classroom rule does not mean a rover is one physical rotary joint.
+The scenes include glazed greenhouse framing, pots and planted benches; a roller conveyor, trays, sink and stainless washer; and a hospital room with a bed, cabinet, table and seated person. Watering, carried objects, completed tasks and the washer feed are visible in the scene.
+
+## A smaller set of choices
+
+- **$1,200** of classroom money and **six joint spaces**, maximum.
+- Two joint motions: **Turn** or **Bend**, with preset rotation limits.
+- Three link sizes: **10, 20 or 40 cm**.
+- At least two arm joints. A rover occupies one joint space, leaving at most five arm joints.
+- Fixed arms use one of **three numbered installation spots** in each scene. Placement stays fixed throughout a trial.
+- The scene's watering nozzle or gripper is included. Students do not configure tools, signed mounting directions, XYZ coordinates or custom joint limits.
 
 | Part | Classroom price |
 | --- | --- |
-| Rotary joint | $100 |
-| Link | $50 per 100 mm; choices from 100 to 500 mm |
+| Joint | $100 |
+| Link | $50 per 10 cm |
 | Fixed base | $100 |
-| Rover base | $400 and one design slot |
-| Inspection camera | Included |
+| Rover base | $400, plus one joint space |
 
-With a rover, **3 joints + 1,000 mm of links**, **4 + 800 mm**, and **5 + 600 mm** each use the same $1,200 budget. Shorter links can pay for another joint. Removing or replacing parts refunds their full cost. Total link length is not guaranteed reach; the camera has an additional fixed 65 mm offset. These are teaching prices, not real supplier quotations.
+A rover with **3 joints and 1 metre of links**, **4 joints and 80 cm**, or **5 joints and 60 cm** costs $1,200. Removing or shortening parts refunds their full price. Link length is the sum of the links, not a guaranteed reach; the tool adds a fixed 65 mm forward offset. These prices are teaching values.
 
-## Three task environments
+## Build → Try → Explain
 
-| Scene | Task | Design trade-off |
-| --- | --- | --- |
-| Greenhouse plant inspection | Inspect plants along a long growing aisle | Distances favor a rover; raised beds constrain travel. |
-| Workshop quality inspection | Inspect three components on a compact workbench | A simple fixed arm can do the job without paying for base travel. |
-| Hospital supply inspection | Inspect supply labels and an equipment display at different heights | Both fixed and mobile solutions fit the budget. |
+The student selects parts and placement. **Try this step** asks a deterministic motion planner to operate that design without changing its parts. Students decide whether to move the rover to another marked stop or return to Build and revise the arm. A failed move does not award progress. Stop interrupts movement without completing the step.
 
-Choosing a task rebuilds the 3D environment, inspection targets, collision fixtures and starting position. Each task keeps its own design, notes and comparison snapshots. Both bases remain selectable; the environment and price trade-offs create the advantages. Student cards describe the task rather than announce a preferred answer. A fixed arm can be installed anywhere its full base fits on clear floor. Students choose its X/Y position and heading in Build by clicking the floor or entering coordinates. Placement stays locked in Test; returning to Build allows revision. Placement is free and saved with each design and comparison.
+The planner checks the arm and carried item at small increments. Rover moves turn toward their route before translating. Successful watering wets the soil; gripped trays and the book follow the robot's tool. The tray rack feeds released trays into the washer. Changing a design resets the trial and returns the robot to its starting pose. A separate notebook keeps predictions, decisions, observations and proposed revisions, with up to six saved comparisons.
 
-## Run locally
+English and 简体中文 are available through a persistent language selector. Each task retains its own design and notebook locally. Save/Open transfers JSON project files. Earlier files are adapted to the smaller kit; their full originals, including old comparison notes, are retained in downloadable archives. Earlier browser storage is left untouched.
 
-With Node.js 24 or later:
+## Run and test
+
+Node.js 24 or later:
 
 ```sh
-git clone https://github.com/zhinii/bnta-robot-builder.git
-cd bnta-robot-builder
 npm start
 ```
 
-Open **http://127.0.0.1:4242/robot-builder/**.
-
-The application needs no dependency installation to run. Three.js is included locally with its license. No account, API key, AI service or external CDN is required. The linked guided lesson is included in this repository.
-
-## Student experience
-
-- **Build:** choose a base and its fixed installation location, buy or remove joints, choose one of five link lengths, select local rotation axes and set rotation limits. Watch the parts bill and remaining budget update.
-- **Test:** move each joint, drive and turn the rover, and compare camera position and direction against the selected scene’s three inspection points.
-- **Explain:** predict, justify a choice, record observations and propose a revision. Keep up to six design snapshots for comparison.
-- **Save:** export/import the selected task's robot, pose, reflections and comparisons. All three task drafts are kept separately in the browser; student work is not uploaded.
-
-These are fictional exploratory inspection contexts. There is no timer, prescribed robot or automatic grade. Measurements support discussion; reaching a target is not proof of a clear route or a successful physical robot. Earlier files retain their geometry and writing with a visible migration notice: the original greenhouse returns to the expanded greenhouse, the disaster scene becomes the greenhouse, and the museum becomes the hospital. Fixed installations from earlier versions start at their original marked positions; original version-1 placement resets to the new greenhouse start. Designs above the new budget remain editable but cannot be tested until their cost is reduced.
-
-See [the detailed builder guide](robot-builder/README.md) for lesson connections and model limits, or open [the guided lesson](beginner-3axis/teacher.html) through the local server.
-
-## Test
-
-Install the development-only test dependency, then run all checks:
+Open http://127.0.0.1:4242/robot-builder/. Three.js and the guided lesson are included locally. The app needs no account, API key or external CDN.
 
 ```sh
 npm ci --ignore-scripts
 npm test
 ```
 
-The suite checks kinematics, prices/refunds, the exact rover reach/articulation examples, slot limits, movement constraints, migration, per-task drafts, interface interactions, lesson behavior and HTTP dependencies. Scenario tests demonstrate a rover inspection route, an inexpensive fixed workshop design, and affordable alternatives for the hospital. The suite also checks rotated base footprints, changed reach, numeric and floor-click installation, Test locking, saved locations and undo. The DOM test checks scene graphs and overview projection at two canvas proportions with a stub renderer; it does not verify rendered pixels or responsive CSS layout.
+Tests cover parts and budget constraints, all three complete tasks, carrying clearances, blocked paths, stop/reset behavior, bilingual controls, original-project preservation, per-task notes, scene graphs and local asset delivery. The scene-graph harness stubs WebGL; separate browser review checks actual rendering and interaction.
 
-Visual WebGL and responsive-layout review are still pending. The model does not simulate self-collision, full swept paths, dynamics, balance, motor loads or actual camera images. Current-pose floor/bench overlap feedback is simplified. There is no physical-robot connection.
+## Model limits
 
-## Project layout
+This is an educational 3D model, not a physical robot controller. Motion planning is a bounded numerical search with simplified geometry and sampled paths; failure to find a move is not proof that no possible move exists. It does not model flexible hoses, self-collision, forces, balance, dynamics or washing mechanics. It does not provide medical treatment or connect to hardware.
 
-| Path | Purpose |
-| --- | --- |
-| `robot-builder/` | Builder application, model, interface and tests |
-| `beginner-3axis/` | Included guided lesson and its required supporting modules |
-| `beginner-3axis/vendor/three/` | Locally vendored Three.js 0.180.0 and license/provenance |
-| `six-axis-agent/kinematics.mjs` | Pure kinematics used by the guided lesson |
-| `scripts/test.mjs` | Test runner with a temporary local asset-check server |
-
-This repository is a clean, independent copy. It excludes the original simulator's server configuration, credentials, logs, sessions and repository history. The original simulator checkout is preserved. GitHub Pages publishes the repository root from `main`; future pushes update the public site automatically.
+Built by Christopher Hansen as an independent companion to [Robot Lab](https://github.com/zhinii/bnta-robotics). The original simulator checkout is preserved. GitHub Pages publishes the root of this repository from `main`.
 
 ## License
 
-Copyright © 2026 Christopher Hansen. Released under the [MIT License](LICENSE). Three.js retains its [own MIT license](beginner-3axis/vendor/three/LICENSE). Attribution and vendored provenance are preserved.
+Copyright © 2026 Christopher Hansen. [MIT License](LICENSE). Vendored Three.js retains its [MIT license](beginner-3axis/vendor/three/LICENSE).
